@@ -23,10 +23,11 @@ import { membersAPI } from '../services/api';
 
 interface Member {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
-  membershipDate: string;
+  nom: string;
+  prenom: string;
+  type: string;
+  matricule: string;
+  created_at: string;
 }
 
 export default function Members() {
@@ -36,9 +37,9 @@ export default function Members() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    nom: '',
+    prenom: '',
+    type: '',
   });
 
   useEffect(() => {
@@ -62,13 +63,13 @@ export default function Members() {
     if (member) {
       setEditingMember(member);
       setFormData({
-        name: member.name,
-        email: member.email,
-        phone: member.phone,
+        nom: member.nom,
+        prenom: member.prenom,
+        type: member.type,
       });
     } else {
       setEditingMember(null);
-      setFormData({ name: '', email: '', phone: '' });
+      setFormData({ nom: '', prenom: '', type: '' });
     }
     setIsDialogOpen(true);
   };
@@ -107,9 +108,9 @@ export default function Members() {
 
   const filteredMembers = members.filter(
     (member) =>
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.phone.includes(searchTerm)
+      member.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.type.includes(searchTerm)
   );
 
   return (
@@ -125,7 +126,7 @@ export default function Members() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
               type="text"
-              placeholder="Rechercher par nom, email ou téléphone..."
+              placeholder="Rechercher par nom, prenom ou type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -146,9 +147,9 @@ export default function Members() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Téléphone</TableHead>
+                  <TableHead>Nom et prenom</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Matricule</TableHead>
                   <TableHead>Date d'inscription</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -163,11 +164,11 @@ export default function Members() {
                 ) : (
                   filteredMembers.map((member) => (
                     <TableRow key={member.id}>
-                      <TableCell>{member.name}</TableCell>
-                      <TableCell>{member.email}</TableCell>
-                      <TableCell>{member.phone}</TableCell>
+                      <TableCell>{member.nom} {member.prenom}</TableCell>
+                      <TableCell>{member.type}</TableCell>
+                      <TableCell>{member.matricule}</TableCell>
                       <TableCell>
-                        {new Date(member.membershipDate).toLocaleDateString('fr-FR')}
+                        {new Date(member.created_at).toLocaleDateString('fr-FR')}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

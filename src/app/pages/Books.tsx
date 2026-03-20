@@ -20,14 +20,19 @@ import {
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { booksAPI } from '../services/api';
+import Swal from "sweetalert2";
 
 interface Book {
   id: string;
-  title: string;
-  author: string;
+  titre: string;
+  auteur: string;
   isbn: string;
-  category: string;
-  available: boolean;
+  categorie: string;
+  exemplaires_disponible: number;
+  exemplaires_total: number;
+  annee_pub:string;
+  statut: string;
+  nbr_emprunts: string;
 }
 
 export default function Books() {
@@ -37,10 +42,12 @@ export default function Books() {
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    author: '',
+    titre: '',
+    auteur: '',
     isbn: '',
-    category: '',
+    categorie: '',
+    annee_pub: '',
+    exemplaires_total: 0,
   });
 
   useEffect(() => {
@@ -64,14 +71,23 @@ export default function Books() {
     if (book) {
       setEditingBook(book);
       setFormData({
-        title: book.title,
-        author: book.author,
         isbn: book.isbn,
-        category: book.category,
+        titre: book.titre,
+        auteur: book.auteur,
+        categorie: book.categorie,
+        annee_pub: book.annee_pub,
+        exemplaires_total: book.exemplaires_total || 0,
       });
     } else {
       setEditingBook(null);
-      setFormData({ title: '', author: '', isbn: '', category: '' });
+      setFormData({ 
+        isbn: "",
+        titre: "",
+        auteur: "",
+        categorie: "",
+        annee_pub: "",
+        exemplaires_total: 0,
+       });
     }
     setIsDialogOpen(true);
   };
@@ -95,7 +111,7 @@ export default function Books() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  /* const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) {
       try {
         await booksAPI.delete(id);
@@ -106,12 +122,47 @@ export default function Books() {
         console.error(error);
       }
     }
-  };
+  }; */
+
+    const handleDelete = async (id: string) => {
+      const result = await Swal.fire({
+        title: "Supprimer le livre ?",
+        text: "Cette action est irréversible !",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Oui, supprimer",
+        cancelButtonText: "Annuler",
+      });
+
+      if (result.isConfirmed) {
+        try {
+          await booksAPI.delete(id);
+
+          await Swal.fire({
+            title: "Supprimé !",
+            text: "Le livre a été supprimé avec succès.",
+            icon: "success",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+
+          loadBooks();
+        } catch (error: any) {
+          Swal.fire({
+            title: "Erreur",
+            text: error.message,
+            icon: "error",
+          });
+        }
+      }
+    };
 
   const filteredBooks = books.filter(
     (book) =>
-      book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.auteur.toLowerCase().includes(searchTerm.toLowerCase()) ||
       book.isbn.includes(searchTerm)
   );
 
@@ -154,6 +205,9 @@ export default function Books() {
                   <TableHead>ISBN</TableHead>
                   <TableHead>Catégorie</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead>Reste</TableHead>
+                  <TableHead>Emprunts</TableHead>
+
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -167,21 +221,22 @@ export default function Books() {
                 ) : (
                   filteredBooks.map((book) => (
                     <TableRow key={book.id}>
-                      <TableCell>{book.title}</TableCell>
-                      <TableCell>{book.author}</TableCell>
+                      <TableCell>{book.titre}</TableCell>
+                      <TableCell>{book.auteur}</TableCell>
                       <TableCell>{book.isbn}</TableCell>
-                      <TableCell>{book.category}</TableCell>
+                      <TableCell>{book.categorie}</TableCell>
                       <TableCell>
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                            book.available
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {book.available ? 'Disponible' : 'Emprunté'}
-                        </span>
-                      </TableCell>
+                      <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        book.statut === "disponible"
+                          ? "!bg-green-100 !text-green-700"
+                          : "!bg-red-100 !text-red-700"
+                      }`}
+                    ></span>
+                      {book.statut}</TableCell>
+                      <TableCell>{book.exemplaires_disponible}</TableCell>
+                      <TableCell>{book.nbr_emprunts}</TableCell>
+
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -219,28 +274,6 @@ export default function Books() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="title">Titre</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="author">Auteur</Label>
-                <Input
-                  id="author"
-                  value={formData.author}
-                  onChange={(e) =>
-                    setFormData({ ...formData, author: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div>
                 <Label htmlFor="isbn">ISBN</Label>
                 <Input
                   id="isbn"
@@ -252,16 +285,62 @@ export default function Books() {
                 />
               </div>
               <div>
-                <Label htmlFor="category">Catégorie</Label>
+                <Label htmlFor="title">Titre</Label>
                 <Input
-                  id="category"
-                  value={formData.category}
+                  id="title"
+                  value={formData.titre}
                   onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
+                    setFormData({ ...formData, titre: e.target.value })
                   }
                   required
                 />
               </div>
+              <div>
+                <Label htmlFor="author">Auteur</Label>
+                <Input
+                  id="author"
+                  value={formData.auteur}
+                  onChange={(e) =>
+                    setFormData({ ...formData, auteur: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="category">Catégorie</Label>
+                <Input
+                  id="category"
+                  value={formData.categorie}
+                  onChange={(e) =>
+                    setFormData({ ...formData, categorie: e.target.value })
+                  }
+                  required
+                />
+              </div>
+               <div>
+              <Label>Année de publication</Label>
+                <Input
+                  type="number"
+                  value={formData.annee_pub}
+                  onChange={(e) =>
+                    setFormData({ ...formData, annee_pub: e.target.value })
+                  }
+                />
+            </div>
+            <div>
+              <Label>Nombre total d'exemplaires</Label>
+              <Input
+                type="number"
+                value={formData.exemplaires_total}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    exemplaires_total: Number(e.target.value),
+                  })
+                }
+              />
+          </div>
             </div>
             <DialogFooter>
               <Button

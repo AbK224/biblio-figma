@@ -28,6 +28,9 @@ interface Book {
   auteur: string;
   isbn: string;
   categorie: string;
+  exemplaires_disponible: number;
+  exemplaires_total: number;
+  annee_pub:string;
   statut: string;
   nbr_emprunts: string;
 }
@@ -40,9 +43,11 @@ export default function Books() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     titre: '',
-    author: '',
+    auteur: '',
     isbn: '',
-    category: '',
+    categorie: '',
+    annee_pub: '',
+    exemplaires_total: 0,
   });
 
   useEffect(() => {
@@ -66,14 +71,23 @@ export default function Books() {
     if (book) {
       setEditingBook(book);
       setFormData({
-        titre: book.titre,
-        author: book.auteur,
         isbn: book.isbn,
-        category: book.categorie,
+        titre: book.titre,
+        auteur: book.auteur,
+        categorie: book.categorie,
+        annee_pub: book.annee_pub,
+        exemplaires_total: book.exemplaires_total || 0,
       });
     } else {
       setEditingBook(null);
-      setFormData({ titre: '', author: '', isbn: '', category: '' });
+      setFormData({ 
+        isbn: "",
+        titre: "",
+        auteur: "",
+        categorie: "",
+        annee_pub: "",
+        exemplaires_total: 0,
+       });
     }
     setIsDialogOpen(true);
   };
@@ -191,6 +205,7 @@ export default function Books() {
                   <TableHead>ISBN</TableHead>
                   <TableHead>Catégorie</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead>Reste</TableHead>
                   <TableHead>Emprunts</TableHead>
 
                   <TableHead className="text-right">Actions</TableHead>
@@ -214,11 +229,12 @@ export default function Books() {
                       <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         book.statut === "disponible"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                          ? "!bg-green-100 !text-green-700"
+                          : "!bg-red-100 !text-red-700"
                       }`}
                     ></span>
                       {book.statut}</TableCell>
+                      <TableCell>{book.exemplaires_disponible}</TableCell>
                       <TableCell>{book.nbr_emprunts}</TableCell>
 
                       <TableCell className="text-right">
@@ -258,6 +274,17 @@ export default function Books() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div>
+                <Label htmlFor="isbn">ISBN</Label>
+                <Input
+                  id="isbn"
+                  value={formData.isbn}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isbn: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
                 <Label htmlFor="title">Titre</Label>
                 <Input
                   id="title"
@@ -272,35 +299,48 @@ export default function Books() {
                 <Label htmlFor="author">Auteur</Label>
                 <Input
                   id="author"
-                  value={formData.author}
+                  value={formData.auteur}
                   onChange={(e) =>
-                    setFormData({ ...formData, author: e.target.value })
+                    setFormData({ ...formData, auteur: e.target.value })
                   }
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="isbn">ISBN</Label>
-                <Input
-                  id="isbn"
-                  value={formData.isbn}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isbn: e.target.value })
-                  }
-                  required
-                />
-              </div>
+              
               <div>
                 <Label htmlFor="category">Catégorie</Label>
                 <Input
                   id="category"
-                  value={formData.category}
+                  value={formData.categorie}
                   onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
+                    setFormData({ ...formData, categorie: e.target.value })
                   }
                   required
                 />
               </div>
+               <div>
+              <Label>Année de publication</Label>
+                <Input
+                  type="number"
+                  value={formData.annee_pub}
+                  onChange={(e) =>
+                    setFormData({ ...formData, annee_pub: e.target.value })
+                  }
+                />
+            </div>
+            <div>
+              <Label>Nombre total d'exemplaires</Label>
+              <Input
+                type="number"
+                value={formData.exemplaires_total}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    exemplaires_total: Number(e.target.value),
+                  })
+                }
+              />
+          </div>
             </div>
             <DialogFooter>
               <Button

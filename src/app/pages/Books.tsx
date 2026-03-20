@@ -20,14 +20,16 @@ import {
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { booksAPI } from '../services/api';
+import Swal from "sweetalert2";
 
 interface Book {
   id: string;
-  title: string;
-  author: string;
+  titre: string;
+  auteur: string;
   isbn: string;
-  category: string;
-  available: boolean;
+  categorie: string;
+  statut: string;
+  nbr_emprunts: string;
 }
 
 export default function Books() {
@@ -37,7 +39,7 @@ export default function Books() {
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
+    titre: '',
     author: '',
     isbn: '',
     category: '',
@@ -64,14 +66,14 @@ export default function Books() {
     if (book) {
       setEditingBook(book);
       setFormData({
-        title: book.title,
-        author: book.author,
+        titre: book.titre,
+        author: book.auteur,
         isbn: book.isbn,
-        category: book.category,
+        category: book.categorie,
       });
     } else {
       setEditingBook(null);
-      setFormData({ title: '', author: '', isbn: '', category: '' });
+      setFormData({ titre: '', author: '', isbn: '', category: '' });
     }
     setIsDialogOpen(true);
   };
@@ -95,7 +97,7 @@ export default function Books() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  /* const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) {
       try {
         await booksAPI.delete(id);
@@ -106,12 +108,47 @@ export default function Books() {
         console.error(error);
       }
     }
-  };
+  }; */
+
+    const handleDelete = async (id: string) => {
+      const result = await Swal.fire({
+        title: "Supprimer le livre ?",
+        text: "Cette action est irréversible !",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Oui, supprimer",
+        cancelButtonText: "Annuler",
+      });
+
+      if (result.isConfirmed) {
+        try {
+          await booksAPI.delete(id);
+
+          await Swal.fire({
+            title: "Supprimé !",
+            text: "Le livre a été supprimé avec succès.",
+            icon: "success",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+
+          loadBooks();
+        } catch (error: any) {
+          Swal.fire({
+            title: "Erreur",
+            text: error.message,
+            icon: "error",
+          });
+        }
+      }
+    };
 
   const filteredBooks = books.filter(
     (book) =>
-      book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.auteur.toLowerCase().includes(searchTerm.toLowerCase()) ||
       book.isbn.includes(searchTerm)
   );
 
@@ -154,6 +191,8 @@ export default function Books() {
                   <TableHead>ISBN</TableHead>
                   <TableHead>Catégorie</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead>Emprunts</TableHead>
+
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -167,21 +206,21 @@ export default function Books() {
                 ) : (
                   filteredBooks.map((book) => (
                     <TableRow key={book.id}>
-                      <TableCell>{book.title}</TableCell>
-                      <TableCell>{book.author}</TableCell>
+                      <TableCell>{book.titre}</TableCell>
+                      <TableCell>{book.auteur}</TableCell>
                       <TableCell>{book.isbn}</TableCell>
-                      <TableCell>{book.category}</TableCell>
+                      <TableCell>{book.categorie}</TableCell>
                       <TableCell>
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                            book.available
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {book.available ? 'Disponible' : 'Emprunté'}
-                        </span>
-                      </TableCell>
+                      <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        book.statut === "disponible"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    ></span>
+                      {book.statut}</TableCell>
+                      <TableCell>{book.nbr_emprunts}</TableCell>
+
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -222,9 +261,9 @@ export default function Books() {
                 <Label htmlFor="title">Titre</Label>
                 <Input
                   id="title"
-                  value={formData.title}
+                  value={formData.titre}
                   onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
+                    setFormData({ ...formData, titre: e.target.value })
                   }
                   required
                 />

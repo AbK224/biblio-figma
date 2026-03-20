@@ -20,13 +20,15 @@ import {
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { membersAPI } from '../services/api';
+import Swal from "sweetalert2";
 
 interface Member {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
-  membershipDate: string;
+  nom: string;
+  prenom: string;
+  type: string;
+  matricule: string;
+  created_at: string;
 }
 
 export default function Members() {
@@ -36,9 +38,9 @@ export default function Members() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    nom: '',
+    prenom: '',
+    type: '',
   });
 
   useEffect(() => {
@@ -62,13 +64,13 @@ export default function Members() {
     if (member) {
       setEditingMember(member);
       setFormData({
-        name: member.name,
-        email: member.email,
-        phone: member.phone,
+        nom: member.nom,
+        prenom: member.prenom,
+        type: member.type,
       });
     } else {
       setEditingMember(null);
-      setFormData({ name: '', email: '', phone: '' });
+      setFormData({ nom: '', prenom: '', type: '' });
     }
     setIsDialogOpen(true);
   };
@@ -92,7 +94,7 @@ export default function Members() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+ /*  const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
       try {
         await membersAPI.delete(id);
@@ -103,13 +105,48 @@ export default function Members() {
         console.error(error);
       }
     }
-  };
+  }; */
+
+    const handleDelete = async (id: string) => {
+          const result = await Swal.fire({
+            title: "Supprimer le membre ?",
+            text: "Cette action est irréversible !",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc2626",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Oui, supprimer",
+            cancelButtonText: "Annuler",
+          });
+    
+          if (result.isConfirmed) {
+            try {
+              await membersAPI.delete(id);
+    
+              await Swal.fire({
+                title: "Supprimé !",
+                text: "Le membre a été supprimé avec succès.",
+                icon: "success",
+                timer: 1500,
+                showConfirmButton: false,
+              });
+    
+              loadMembers();
+            } catch (error: any) {
+              Swal.fire({
+                title: "Erreur",
+                text: error.message,
+                icon: "error",
+              });
+            }
+          }
+    };
 
   const filteredMembers = members.filter(
     (member) =>
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.phone.includes(searchTerm)
+      member.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.type.includes(searchTerm)
   );
 
   return (
@@ -125,7 +162,7 @@ export default function Members() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
               type="text"
-              placeholder="Rechercher par nom, email ou téléphone..."
+              placeholder="Rechercher par nom, prenom ou type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -146,9 +183,9 @@ export default function Members() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Téléphone</TableHead>
+                  <TableHead>Nom et prenom</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Matricule</TableHead>
                   <TableHead>Date d'inscription</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -163,11 +200,11 @@ export default function Members() {
                 ) : (
                   filteredMembers.map((member) => (
                     <TableRow key={member.id}>
-                      <TableCell>{member.name}</TableCell>
-                      <TableCell>{member.email}</TableCell>
-                      <TableCell>{member.phone}</TableCell>
+                      <TableCell>{member.nom} {member.prenom}</TableCell>
+                      <TableCell>{member.type}</TableCell>
+                      <TableCell>{member.matricule}</TableCell>
                       <TableCell>
-                        {new Date(member.membershipDate).toLocaleDateString('fr-FR')}
+                        {new Date(member.created_at).toLocaleDateString('fr-FR')}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -206,38 +243,44 @@ export default function Members() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="name">Nom complet</Label>
+                <Label htmlFor="name">Nom</Label>
                 <Input
                   id="name"
-                  value={formData.name}
+                  value={formData.nom}
                   onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
+                    setFormData({ ...formData, nom: e.target.value })
                   }
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="name">Prenom</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
+                  id="name"
+                  value={formData.prenom}
                   onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                    setFormData({ ...formData, prenom: e.target.value })
                   }
                   required
                 />
               </div>
+
               <div>
-                <Label htmlFor="phone">Téléphone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  required
-                />
+                <Label htmlFor="type">Type</Label>
+                <select
+                id="type"
+                value={formData.type}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value })
+                }
+                className="w-full border rounded-md px-3 py-2"
+                required
+              >
+                <option value="">-- Choisir un type --</option>
+                <option value="etudiant">Étudiant</option>
+                <option value="enseignant">Enseignant</option>
+                <option value="administratif">Personnel</option>
+              </select>
               </div>
             </div>
             <DialogFooter>

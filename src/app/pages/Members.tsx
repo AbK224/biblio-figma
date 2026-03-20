@@ -20,6 +20,7 @@ import {
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { membersAPI } from '../services/api';
+import Swal from "sweetalert2";
 
 interface Member {
   id: string;
@@ -93,7 +94,7 @@ export default function Members() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+ /*  const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
       try {
         await membersAPI.delete(id);
@@ -104,7 +105,42 @@ export default function Members() {
         console.error(error);
       }
     }
-  };
+  }; */
+
+    const handleDelete = async (id: string) => {
+          const result = await Swal.fire({
+            title: "Supprimer le membre ?",
+            text: "Cette action est irréversible !",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc2626",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Oui, supprimer",
+            cancelButtonText: "Annuler",
+          });
+    
+          if (result.isConfirmed) {
+            try {
+              await membersAPI.delete(id);
+    
+              await Swal.fire({
+                title: "Supprimé !",
+                text: "Le membre a été supprimé avec succès.",
+                icon: "success",
+                timer: 1500,
+                showConfirmButton: false,
+              });
+    
+              loadMembers();
+            } catch (error: any) {
+              Swal.fire({
+                title: "Erreur",
+                text: error.message,
+                icon: "error",
+              });
+            }
+          }
+    };
 
   const filteredMembers = members.filter(
     (member) =>
@@ -207,38 +243,44 @@ export default function Members() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="name">Nom complet</Label>
+                <Label htmlFor="name">Nom</Label>
                 <Input
                   id="name"
-                  value={formData.name}
+                  value={formData.nom}
                   onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
+                    setFormData({ ...formData, nom: e.target.value })
                   }
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="name">Prenom</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
+                  id="name"
+                  value={formData.prenom}
                   onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                    setFormData({ ...formData, prenom: e.target.value })
                   }
                   required
                 />
               </div>
+
               <div>
-                <Label htmlFor="phone">Téléphone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  required
-                />
+                <Label htmlFor="type">Type</Label>
+                <select
+                id="type"
+                value={formData.type}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value })
+                }
+                className="w-full border rounded-md px-3 py-2"
+                required
+              >
+                <option value="">-- Choisir un type --</option>
+                <option value="etudiant">Étudiant</option>
+                <option value="enseignant">Enseignant</option>
+                <option value="administratif">Personnel</option>
+              </select>
               </div>
             </div>
             <DialogFooter>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, CheckCircle, Loader2 } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import {
@@ -27,16 +27,16 @@ import {
 } from '../components/ui/select';
 import { toast } from 'sonner';
 import { loansAPI, booksAPI, membersAPI } from '../services/api';
+import Swal from "sweetalert2";
 
 interface Loan {
   id: string;
-  bookId: string;
-  bookTitle: string;
-  memberId: string;
-  memberName: string;
-  loanDate: string;
-  dueDate: string;
-  returnedDate?: string;
+  utilisateur_id: string;
+  livre_isbn: string;
+  date_emprunt: string;
+  date_retour_prevue: string;
+  date_retour_effective: string;
+  statut: string;
 }
 
 export default function Loans() {
@@ -47,8 +47,8 @@ export default function Loans() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    bookId: '',
-    memberId: '',
+    livre_isbn: '',
+    utilisateur_id: '',
   });
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function Loans() {
   };
 
   const handleOpenDialog = () => {
-    setFormData({ bookId: '', memberId: '' });
+    setFormData({ livre_isbn: '', utilisateur_id: '' });
     setIsDialogOpen(true);
   };
 
@@ -105,20 +105,69 @@ export default function Loans() {
   };
 
   const isOverdue = (loan: Loan) => {
-    if (loan.returnedDate) return false;
+    if (loan.date_retour_effective) return false;
     const today = new Date();
-    const dueDate = new Date(loan.dueDate);
+    const dueDate = new Date(loan.date_retour_prevue);
     return dueDate < today;
   };
 
+  const handleDelete = async (id: string) => {
+        const result = await Swal.fire({
+          title: "Supprimer le livre ?",
+          text: "Cette action est irréversible !",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#dc2626",
+          cancelButtonColor: "#6b7280",
+          confirmButtonText: "Oui, supprimer",
+          cancelButtonText: "Annuler",
+        });
+  
+        if (result.isConfirmed) {
+          try {
+            await loansAPI.delete(id);
+  
+            await Swal.fire({
+              title: "Supprimé !",
+              text: "Le livre a été supprimé avec succès.",
+              icon: "success",
+              timer: 1500,
+              showConfirmButton: false,
+            });
+  
+            loadData();
+          } catch (error: any) {
+            Swal.fire({
+              title: "Erreur",
+              text: error.message,
+              icon: "error",
+            });
+          }
+        }
+      };
+
   const filteredLoans = loans.filter(
     (loan) =>
-      loan.bookTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      loan.memberName.toLowerCase().includes(searchTerm.toLowerCase())
+      loan.livre_isbn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      loan.utilisateur_id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const availableBooks = books.filter((book) => book.available);
+  
+  const getBookTitle = (isbn: string) => {
+    const book = books.find((b) => b.isbn === isbn);
+    return book ? book.titre : "Inconnu";
+  };
 
+  const getMemberName = (id: string) => {
+    const member = members.find((m) => m.id === id);
+    return member ? `${member.nom} ${member.prenom}` : "Inconnu";
+  };
+
+  const getMemberType = (id: string) => {
+  const member = members.find((m) => m.id === id);
+  return member ? `${member.type}` : "Inconnu";
+  };
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -153,8 +202,10 @@ export default function Loans() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>ID</TableHead>
                   <TableHead>Livre</TableHead>
                   <TableHead>Membre</TableHead>
+                  <TableHead>Membre_type</TableHead>
                   <TableHead>Date d'emprunt</TableHead>
                   <TableHead>Date de retour prévue</TableHead>
                   <TableHead>Statut</TableHead>
@@ -171,16 +222,18 @@ export default function Loans() {
                 ) : (
                   filteredLoans.map((loan) => (
                     <TableRow key={loan.id}>
-                      <TableCell>{loan.bookTitle}</TableCell>
-                      <TableCell>{loan.memberName}</TableCell>
+                      <TableCell>{loan.id}</TableCell>
+                      <TableCell>{getBookTitle(loan.livre_isbn)}</TableCell>
+                      <TableCell>{getMemberName(loan.utilisateur_id)}</TableCell>
+                      <TableCell>{getMemberType(loan.utilisateur_id)}</TableCell>
                       <TableCell>
-                        {new Date(loan.loanDate).toLocaleDateString('fr-FR')}
+                        {new Date(loan.date_emprunt).toLocaleDateString('fr-FR')}
                       </TableCell>
                       <TableCell>
-                        {new Date(loan.dueDate).toLocaleDateString('fr-FR')}
+                        {new Date(loan.date_retour_prevue).toLocaleDateString('fr-FR')}
                       </TableCell>
                       <TableCell>
-                        {loan.returnedDate ? (
+                        {loan.statut /* ? (
                           <span className="inline-flex px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
                             Retourné
                           </span>
@@ -192,19 +245,25 @@ export default function Loans() {
                           <span className="inline-flex px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
                             En cours
                           </span>
-                        )}
+                        ) */}
                       </TableCell>
                       <TableCell className="text-right">
-                        {!loan.returnedDate && (
+                        <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleReturn(loan.id)}
+                            onClick={() => handleOpenDialog()}
                           >
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Retourner
+                            <Edit className="w-4 h-4" />
                           </Button>
-                        )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(loan.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

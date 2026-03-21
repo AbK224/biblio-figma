@@ -83,6 +83,12 @@ export const loansAPI = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  update: (id: string, data: any) =>
+    request(`/emprunt/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
   returnLoan: (id: string) =>
     request(`/emprunt/${id}/return`, {
       method: "POST",

@@ -385,6 +385,8 @@ export default function Loans() {
                     <SelectContent>
                       <SelectItem value="en cours">En cours</SelectItem>
                       <SelectItem value="retourné">Retourné</SelectItem>
+                      <SelectItem value="retourné">Perdu</SelectItem>
+
                     </SelectContent>
                   </Select>
                 </div>

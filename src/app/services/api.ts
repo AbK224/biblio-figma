@@ -76,19 +76,25 @@ export const membersAPI = {
 
 // API Loans
 export const loansAPI = {
-  getAll: () => request("/loans"),
-  getById: (id: string) => request(`/loans/${id}`),
+  getAll: () => request("/emprunt"),
+  getById: (id: string) => request(`/emprunt/${id}`),
   create: (data: any) =>
-    request("/loans", {
+    request("/emprunt", {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  update: (id: string, data: any) =>
+    request(`/emprunt/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
   returnLoan: (id: string) =>
-    request(`/loans/${id}/return`, {
+    request(`/emprunt/${id}/return`, {
       method: "POST",
     }),
   delete: (id: string) =>
-    request(`/loans/${id}`, {
+    request(`/emprunt/${id}`, {
       method: "DELETE",
     }),
 };

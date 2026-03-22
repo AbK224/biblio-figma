@@ -80,6 +80,20 @@ export default function Loans() {
     }
   };
 
+  //Gestion du retard
+  const isOverdue = (loan: Loan) => {
+    if (loan.statut === "retourné") return false;
+    if (!loan.date_retour_prevue) return false;
+
+    const today = new Date();
+    const dueDate = new Date(loan.date_retour_prevue);
+
+    today.setHours(0, 0, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
+
+    return today > dueDate;
+  };
+
   const handleOpenDialog = (loan?: Loan) => {
     if (loan) {
       setEditingLoan(loan);
@@ -234,6 +248,7 @@ export default function Loans() {
                   <TableHead>Date d'emprunt</TableHead>
                   <TableHead>Date de retour prévue</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead>Retard</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -262,6 +277,8 @@ export default function Loans() {
                           : "-"}
                       </TableCell>
                       <TableCell>{loan.statut || "-"}</TableCell>
+                      <TableCell>{isOverdue(loan) ? "Oui" : "Non"}</TableCell>
+
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

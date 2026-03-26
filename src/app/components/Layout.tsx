@@ -58,7 +58,7 @@ export function Layout() {
 
         <div className="p-4 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
-            © 2026 Bibliothèque
+            © 2026 Bibliothèque Groupe 3: DIT M1
           </p>
         </div>
       </aside>

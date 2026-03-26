@@ -1,10 +1,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-size: 16px;
+  --font-size: 17px;
   --background: #ffffff;
   --foreground: oklch(0.145 0 0);
-  --card: #ffffff;
+  --card: #e6dcdc;
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
